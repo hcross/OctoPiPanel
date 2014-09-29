@@ -92,3 +92,5 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+
+OctoPiPanel.cfg

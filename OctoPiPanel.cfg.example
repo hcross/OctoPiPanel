@@ -1,0 +1,7 @@
+[settings]
+baseurl = http://192.168.0.100:5000
+apikey = OCTOPRINT_API_KEY_HERE
+
+updatetime = 2000
+backlightofftime = 30000
+

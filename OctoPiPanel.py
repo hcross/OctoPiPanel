@@ -290,10 +290,10 @@ class OctoPiPanel():
                 state = json.loads(req.text)
         
                 # Set status flags
-                self.HotEndTemp = state['temps']['tool0']['actual']
-                self.BedTemp = state['temps']['bed']['actual']
-                self.HotEndTempTarget = state['temps']['tool0']['target']
-                self.BedTempTarget = state['temps']['bed']['target']
+                self.HotEndTemp = state['temperature']['tool0']['actual']
+                self.BedTemp = state['temperature']['bed']['actual']
+                self.HotEndTempTarget = state['temperature']['tool0']['target']
+                self.BedTempTarget = state['temperature']['bed']['target']
 
                 if self.HotEndTempTarget == None:
                     self.HotEndTempTarget = 0.0
@@ -404,7 +404,7 @@ class OctoPiPanel():
         # Place temperatures texts
         lblHotEndTemp = self.fntText.render(u'Hot end: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.HotEndTemp, self.HotEndTempTarget), 1, (220, 0, 0))
         self.screen.blit(lblHotEndTemp, (112, 60))
-        lblBedTemp = self.fntText.render(u'Bed: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.BedTemp, self.BedTempTarget), 1, (0, 0, 220))
+        lblBedTemp = self.fntText.render(u'Bed: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.BedTemp, self.BedTempTarget), 1, (220, 0, 0))
         self.screen.blit(lblBedTemp, (112, 75))
 
         # Place time left and compeltetion texts
