@@ -129,6 +129,9 @@ class OctoPiPanel():
 
         # init pygame and set up screen
         pygame.init()
+        import spg
+        from spg.core import *
+        
         if platform.system() == 'Windows':
             pygame.mouse.set_visible(True)
         else:
@@ -139,6 +142,66 @@ class OctoPiPanel():
 	#modes = pygame.display.list_modes(16)
 	#self.screen = pygame.display.set_mode(modes[0], FULLSCREEN, 16)
         pygame.display.set_caption( caption )
+        
+        # spg init
+        self.desktop = Desktop()
+        artpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "art");
+        self.background = pygame.image.load(os.path.join(artpath, "back.jpg")).convert()
+        #COMMON STYLES
+        graphicButtonStyle = {'font': spg.styles.defaultFont,
+                      'antialias': True,
+                      'autosize': True,
+                      
+                      'appearence': spg.styles.GRAPHICAL,
+                      
+                      'font-color':(0,0,0),
+                      'font-color-over': (0,0,0),
+                      'font-color-down': (0,0,0),
+                      
+                      'font-color-disabled': (0,0,0), 
+                      
+                      'skin': pygame.image.load(os.path.join(artpath, "button.png")).convert_alpha(),
+                      'widths-normal': (4,1,4),
+                      'widths-over': (4,1,4),
+                      'widths-down': (4,1,4),
+                      'widths-disabled': (4,1,4),
+                      'widths-focused': (6,2,6)
+                      }
+
+        ok_icon = pygame.image.load(os.path.join(artpath, "ok.png")).convert_alpha()
+        cancel_icon = pygame.image.load(os.path.join(artpath, "cancel.png")).convert_alpha()
+
+        closeButtonSkin  = pygame.image.load(os.path.join(artpath, "close.png")).convert_alpha()
+        shadeButtonSkin =  pygame.image.load(os.path.join(artpath, "shade.png")).convert_alpha()
+
+        winStyle = {'font': spg.styles.titleFont,
+              'font-color': (255,255,255),
+              'offset-top-left': (14, 35),
+              'offset-bottom-right': (14,14),
+              'title-position': (10,10),
+              
+              'appearence': spg.styles.GRAPHICAL,
+              
+              'border-offset-top-left': (5,5),
+              'border-offset-bottom-right': (7,5),
+              
+              'image-top-left': pygame.image.load(os.path.join(artpath, "win_topleft.png")).convert_alpha(),
+              'image-top': pygame.image.load(os.path.join(artpath, "win_top.png")).convert_alpha(),
+              'image-top-right': pygame.image.load(os.path.join(artpath, "win_topright.png")).convert_alpha(),
+              'image-right': pygame.image.load(os.path.join(artpath, "win_right.png")).convert_alpha(),
+              'image-bottom-right': pygame.image.load(os.path.join(artpath, "win_bottomright.png")).convert_alpha(),
+              'image-bottom': pygame.image.load(os.path.join(artpath, "win_bottom.png")).convert_alpha(),
+              'image-bottom-left': pygame.image.load(os.path.join(artpath, "win_bottomleft.png")).convert_alpha(),
+              'image-left': pygame.image.load(os.path.join(artpath, "win_left.png")).convert_alpha(),
+              'image-middle': pygame.image.load(os.path.join(artpath, "win_middle.png")).convert_alpha(),
+              
+              'close-button-skin':  closeButtonSkin,
+              'shade-button-skin': shadeButtonSkin,
+              
+              'close-button-offset': (10,7),
+              'shade-button-offset': (32,7),
+              'shade-button-only-offset': (10,7)
+              }
 
         # Set font
         #self.fntText = pygame.font.Font("Cyberbit.ttf", 12)
@@ -152,9 +215,9 @@ class OctoPiPanel():
         self.bglight_on = True
 
         # Home X/Y/Z buttons
-        self.btnHomeXY        = pygbutton.PygButton((  5,   5, 100, self.buttonHeight), "Home X/Y") 
-        self.btnHomeZ         = pygbutton.PygButton((  5,  35, 100, self.buttonHeight), "Home Z") 
-        self.btnZUp           = pygbutton.PygButton((110,  35, 100, self.buttonHeight), "Z +25") 
+        self.btnHomeXY        = Button(parent = self.desktop, position = (5,   5), size = (100, 35), text = "Home X/Y", style = graphicButtonStyle).connect('onClick', self.home_xy) 
+        self.btnHomeZ         = Button(parent = self.desktop, position = (5,   35), size = (100, 35), text = "Home Z", style = graphicButtonStyle)
+        self.btnZUp           = Button(parent = self.desktop, position = (110,   35), size = (100, 35), text = "Z +25", style = graphicButtonStyle)
 
         # Heat buttons
         self.btnHeatBed       = pygbutton.PygButton((  5,  65, 100, self.buttonHeight), "Heat bed") 
@@ -238,14 +301,14 @@ class OctoPiPanel():
             # It should only be possible to click a button if you can see it
             #  e.g. the backlight is on
             if self.bglight_on == True:
-                if 'click' in self.btnHomeXY.handleEvent(event):
+                '''if 'click' in self.btnHomeXY.handleEvent(event):
                     self._home_xy()
 
                 if 'click' in self.btnHomeZ.handleEvent(event):
                     self._home_z()
 
                 if 'click' in self.btnZUp.handleEvent(event):
-                    self._z_up()
+                    self._z_up()'''
 
                 if 'click' in self.btnHeatBed.handleEvent(event):
                     self._heat_bed()
@@ -388,6 +451,7 @@ class OctoPiPanel():
     def draw(self):
         #clear whole screen
         self.screen.fill( self.color_bg )
+        self.screen.blit(self.background, (0,0))
 
         # Draw buttons
         self.btnHomeXY.draw(self.screen)
