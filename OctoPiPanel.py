@@ -92,6 +92,7 @@ class OctoPiPanel():
         """
         self.done = False
         self.color_bg = pygame.Color(41, 61, 70)
+        self.clock = pygame.time.Clock()
 
         # Button settings
         self.buttonWidth = 100
@@ -148,7 +149,8 @@ class OctoPiPanel():
         artpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "art");
         self.background = pygame.image.load(os.path.join(artpath, "back.jpg")).convert()
         #COMMON STYLES
-        graphicButtonStyle = {'font': spg.styles.defaultFont,
+        buttonsFont = pygame.font.Font(os.path.join(self.scriptDirectory, "visitor1.ttf"), 12)
+        graphicButtonStyle = {'font': buttonsFont, #spg.styles.defaultFont,
                       'antialias': True,
                       'autosize': True,
                       
@@ -205,32 +207,30 @@ class OctoPiPanel():
 
         # Set font
         #self.fntText = pygame.font.Font("Cyberbit.ttf", 12)
-        self.fntText = pygame.font.Font(os.path.join(self.scriptDirectory, "Cyberbit.ttf"), 12)
-        self.fntText.set_bold(True)
-        self.fntTextSmall = pygame.font.Font(os.path.join(self.scriptDirectory, "Cyberbit.ttf"), 10)
-        self.fntTextSmall.set_bold(True)
+        self.fntText = pygame.font.Font(os.path.join(self.scriptDirectory, "acknowtt.ttf"), 12)
+        self.fntTextSmall = pygame.font.Font(os.path.join(self.scriptDirectory, "visitor1.ttf"), 10)
 
         # backlight on off status and control
         self.bglight_ticks = pygame.time.get_ticks()
         self.bglight_on = True
 
         # Home X/Y/Z buttons
-        self.btnHomeXY        = Button(parent = self.desktop, position = (5,   5), size = (100, 35), text = "Home X/Y", style = graphicButtonStyle).connect('onClick', self.home_xy) 
-        self.btnHomeZ         = Button(parent = self.desktop, position = (5,   35), size = (100, 35), text = "Home Z", style = graphicButtonStyle)
-        self.btnZUp           = Button(parent = self.desktop, position = (110,   35), size = (100, 35), text = "Z +25", style = graphicButtonStyle)
+        self.btnHomeXY        = Button(parent = self.desktop, position = (5,   37 ), size = (100, 20), autosize = False, text = "Home X/Y", style = graphicButtonStyle).connect('onClick', self._home_xy) 
+        self.btnHomeZ         = Button(parent = self.desktop, position = (5,   59 ), size = (100, 20), autosize = False, text = "Home Z", style = graphicButtonStyle).connect('onClick', self._home_z)
+        self.btnZUp           = Button(parent = self.desktop, position = (110, 59 ), size = (100, 20), autosize = False, text = "Z +25", style = graphicButtonStyle).connect('onClick', self._z_up)
 
         # Heat buttons
-        self.btnHeatBed       = pygbutton.PygButton((  5,  65, 100, self.buttonHeight), "Heat bed") 
-        self.btnHeatHotEnd    = pygbutton.PygButton((  5,  95, 100, self.buttonHeight), "Heat hot end") 
+        self.btnHeatBed       = Button(parent = self.desktop, position = (5,   81 ), size = (100, 20), autosize = False, text = "Heat bed", style = graphicButtonStyle).connect('onClick', self._heat_bed)
+        self.btnHeatHotEnd    = Button(parent = self.desktop, position = (110, 81 ),  size = (100, 20), autosize = False, text = "Heat hotend", style = graphicButtonStyle).connect('onClick', self._heat_hotend)
 
         # Start, stop and pause buttons
-        self.btnStartPrint    = pygbutton.PygButton((110,   5, 100, self.buttonHeight), "Start print") 
-        self.btnAbortPrint    = pygbutton.PygButton((110,   5, 100, self.buttonHeight), "Abort print", (200, 0, 0)) 
-        self.btnPausePrint    = pygbutton.PygButton((110,  35, 100, self.buttonHeight), "Pause print") 
+        self.btnStartPrint    = Button(parent = self.desktop, position = (110, 37 ), size = (100, 20), autosize = False, text = "Start print", style = graphicButtonStyle).connect('onClick', self._start_print)
+        self.btnAbortPrint    = Button(parent = self.desktop, position = (110, 37 ), size = (100, 20), autosize = False, text = "Abort print", style = graphicButtonStyle).connect('onClick', self._abort_print)
+        self.btnPausePrint    = Button(parent = self.desktop, position = (110, 37 ), size = (100, 20), autosize = False, text = "Pause print", style = graphicButtonStyle).connect('onClick', self._pause_print)
 
         # Shutdown and reboot buttons
-        self.btnReboot        = pygbutton.PygButton((215,   5, 100, self.buttonHeight), "Reboot");
-        self.btnShutdown      = pygbutton.PygButton((215,  35, 100, self.buttonHeight), "Shutdown");
+        self.btnReboot        = Button(parent = self.desktop, position = (215, 37 ), size = (100, 20), autosize = False, text = "Reboot", style = graphicButtonStyle).connect('onClick', self._reboot)
+        self.btnShutdown      = Button(parent = self.desktop, position = (215, 59 ), size = (100, 20), autosize = False, text = "Shutdown", style = graphicButtonStyle).connect('onClick', self._shutdown)
 
         # I couldnt seem to get at pin 252 for the backlight using the usual method, 
         # but this seems to work
@@ -283,53 +283,22 @@ class OctoPiPanel():
        
     def handle_events(self):
         """handle all events."""
-        for event in pygame.event.get():
+        self.tick = self.clock.tick()
+        import spg
+        for event in spg.setEvents():
             if event.type == pygame.QUIT:
                 print "quit"
-		self.done = True
+                self.done = True
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     print "Got escape key"
-		    self.done = True
+                    self.done = True
 
                 # Look for specific keys.
                 #  Could be used if a keyboard is connected
                 if event.key == pygame.K_a:
                     print "Got A key"
-
-            # It should only be possible to click a button if you can see it
-            #  e.g. the backlight is on
-            if self.bglight_on == True:
-                '''if 'click' in self.btnHomeXY.handleEvent(event):
-                    self._home_xy()
-
-                if 'click' in self.btnHomeZ.handleEvent(event):
-                    self._home_z()
-
-                if 'click' in self.btnZUp.handleEvent(event):
-                    self._z_up()'''
-
-                if 'click' in self.btnHeatBed.handleEvent(event):
-                    self._heat_bed()
-
-                if 'click' in self.btnHeatHotEnd.handleEvent(event):
-                    self._heat_hotend()
-
-                if 'click' in self.btnStartPrint.handleEvent(event):
-                    self._start_print()
-
-                if 'click' in self.btnAbortPrint.handleEvent(event):
-                    self._abort_print()
-
-                if 'click' in self.btnPausePrint.handleEvent(event):
-                    self._pause_print()
-
-                if 'click' in self.btnReboot.handleEvent(event):
-                    self._reboot()
-
-                if 'click' in self.btnShutdown.handleEvent(event):
-                    self._shutdown()
             
             # Did the user click on the screen?
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -341,6 +310,8 @@ class OctoPiPanel():
                     os.system("echo '1' > /sys/class/gpio/gpio252/value")
                     self.bglight_on = True
                     print "Background light on."
+        
+        self.desktop.update()
 
     """
     Get status update from API, regarding temp etc.
@@ -452,35 +423,26 @@ class OctoPiPanel():
         #clear whole screen
         self.screen.fill( self.color_bg )
         self.screen.blit(self.background, (0,0))
-
-        # Draw buttons
-        self.btnHomeXY.draw(self.screen)
-        self.btnHomeZ.draw(self.screen)
-        self.btnZUp.draw(self.screen)
-        self.btnHeatBed.draw(self.screen)
-        self.btnHeatHotEnd.draw(self.screen)
-        self.btnStartPrint.draw(self.screen)
-        self.btnAbortPrint.draw(self.screen)
-        self.btnPausePrint.draw(self.screen)
-        self.btnReboot.draw(self.screen)
-        self.btnShutdown.draw(self.screen)
+        
+        self.desktop.update()
+        self.desktop.draw()
 
         # Place temperatures texts
-        lblHotEndTemp = self.fntText.render(u'Hot end: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.HotEndTemp, self.HotEndTempTarget), 1, (220, 0, 0))
-        self.screen.blit(lblHotEndTemp, (112, 60))
-        lblBedTemp = self.fntText.render(u'Bed: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.BedTemp, self.BedTempTarget), 1, (220, 0, 0))
-        self.screen.blit(lblBedTemp, (112, 75))
+        lblHotEndTemp = self.fntText.render(u'Hot end: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.HotEndTemp, self.HotEndTempTarget), 1, (255, 255, 255))
+        self.screen.blit(lblHotEndTemp, (42, 5))
+        lblBedTemp = self.fntText.render(u'Bed: {0}\N{DEGREE SIGN}C ({1}\N{DEGREE SIGN}C)'.format(self.BedTemp, self.BedTempTarget), 1, (255, 255, 255))
+        self.screen.blit(lblBedTemp, (42, 18))
 
         # Place time left and compeltetion texts
         if self.JobLoaded == False or self.PrintTimeLeft == None or self.Completion == None:
             self.Completion = 0
             self.PrintTimeLeft = 0;
 
-        lblPrintTimeLeft = self.fntText.render("Time left: {0}".format(datetime.timedelta(seconds = self.PrintTimeLeft)), 1, (200, 200, 200))
-        self.screen.blit(lblPrintTimeLeft, (112, 90))
+        lblPrintTimeLeft = self.fntText.render("Time left: {0}".format(datetime.timedelta(seconds = self.PrintTimeLeft)), 1, (255, 255, 255))
+        self.screen.blit(lblPrintTimeLeft, (195, 5))
 
-        lblCompletion = self.fntText.render("Completion: {0:.1f}%".format(self.Completion), 1, (200, 200, 200))
-        self.screen.blit(lblCompletion, (112, 105))
+        lblCompletion = self.fntText.render("Completion: {0:.1f}%".format(self.Completion), 1, (255, 255, 255))
+        self.screen.blit(lblCompletion, (195, 18))
 
         # Temperature Graphing
         # Graph area
@@ -550,7 +512,9 @@ class OctoPiPanel():
         # update screen
         pygame.display.update()
 
-    def _home_xy(self):
+    def _home_xy(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         data = { "command": "home", "axes": ["x", "y"] }
 
         # Send command
@@ -558,7 +522,9 @@ class OctoPiPanel():
 
         return
 
-    def _home_z(self):
+    def _home_z(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         data = { "command": "home", "axes": ["z"] }
 
         # Send command
@@ -566,7 +532,9 @@ class OctoPiPanel():
 
         return
 
-    def _z_up(self):
+    def _z_up(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         data = { "command": "jog", "x": 0, "y": 0, "z": 25 }
 
         # Send command
@@ -575,7 +543,9 @@ class OctoPiPanel():
         return
 
 
-    def _heat_bed(self):
+    def _heat_bed(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         # is the bed already hot, in that case turn it off
         if self.HotBed:
             data = { "command": "target", "target": 0 }
@@ -587,7 +557,9 @@ class OctoPiPanel():
 
         return
 
-    def _heat_hotend(self):
+    def _heat_hotend(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         # is the bed already hot, in that case turn it off
         if self.HotHotEnd:
             data = { "command": "target", "targets": { "tool0": 0   } }
@@ -599,7 +571,9 @@ class OctoPiPanel():
 
         return
 
-    def _start_print(self):
+    def _start_print(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         # here we should display a yes/no box somehow
         data = { "command": "start" }
 
@@ -608,7 +582,9 @@ class OctoPiPanel():
 
         return
 
-    def _abort_print(self):
+    def _abort_print(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         # here we should display a yes/no box somehow
         data = { "command": "cancel" }
 
@@ -618,7 +594,9 @@ class OctoPiPanel():
         return
 
     # Pause or resume print
-    def _pause_print(self):
+    def _pause_print(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         data = { "command": "pause" }
 
         # Send command
@@ -627,7 +605,9 @@ class OctoPiPanel():
         return
 
     # Reboot system
-    def _reboot(self):
+    def _reboot(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         if platform.system() == 'Linux':
             os.system("reboot")
         else:
@@ -639,7 +619,9 @@ class OctoPiPanel():
         return
 
     # Shutdown system
-    def _shutdown(self):
+    def _shutdown(self, widget):
+        if self.bglight_on == False and platform.system() == 'Linux':
+            return
         if platform.system() == 'Linux':
             os.system("shutdown -h 0")
 
